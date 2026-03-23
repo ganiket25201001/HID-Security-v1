@@ -83,8 +83,9 @@ public class HidSecurityWindowsService : BackgroundService
         }
 
         // Log service start event
-        await _eventLogger.LogEventAsync(new Core.Events.ServiceStartedEvent
+        await _eventLogger.LogEventAsync(new Core.Events.ServiceLifecycleEvent
         {
+            EventType = "ServiceStarted",
             Title = "HID Security Service Started",
             Description = $"Service started on {Environment.MachineName}",
             Source = "HidSecurityWindowsService"
@@ -103,8 +104,9 @@ public class HidSecurityWindowsService : BackgroundService
         try
         {
             // Log service stop event
-            await _eventLogger.LogEventAsync(new Core.Events.ServiceStoppedEvent
+            await _eventLogger.LogEventAsync(new Core.Events.ServiceLifecycleEvent
             {
+                EventType = "ServiceStopped",
                 Title = "HID Security Service Stopped",
                 Description = "Service stopped gracefully",
                 Source = "HidSecurityWindowsService"
@@ -189,7 +191,7 @@ public class HidSecurityWindowsService : BackgroundService
                 Description = $"VID:{device.VendorId:X4} PID:{device.ProductId:X4}",
                 Source = "DeviceMonitor",
                 DeviceId = device.DeviceId,
-                Severity = policyDecision.IsAllowed ? EventSeverity.Informational : EventSeverity.Warning,
+                Severity = policyDecision.IsAllowed ? Core.Events.EventSeverity.Informational : Core.Events.EventSeverity.Warning,
                 DeviceInfo = new Core.Events.UsbDeviceInfo
                 {
                     DeviceId = device.DeviceId,
@@ -202,7 +204,7 @@ public class HidSecurityWindowsService : BackgroundService
                 },
                 IsKnownDevice = !string.IsNullOrEmpty(device.SerialNumber),
                 InitialDecision = policyDecision,
-                Data = 
+                Data =
                 {
                     ["PolicyAllowed"] = policyDecision.IsAllowed,
                     ["PolicyReason"] = policyDecision.Reason,
@@ -216,7 +218,7 @@ public class HidSecurityWindowsService : BackgroundService
             // Broadcast to connected clients
             await _ipcService.BroadcastAsync(new Core.Interfaces.IpcMessage
             {
-                MessageType = Core.Interfaces.IpcMessageTypes.DeviceListResponse,
+                MessageType = Services.IPC.IpcMessageTypes.DeviceListResponse,
                 Payload = new Dictionary<string, object?>
                 {
                     ["Action"] = "DeviceConnected",
@@ -247,7 +249,7 @@ public class HidSecurityWindowsService : BackgroundService
                 Description = $"Device {deviceId} was disconnected",
                 Source = "DeviceMonitor",
                 DeviceId = deviceId,
-                Severity = EventSeverity.Informational,
+                Severity = Core.Events.EventSeverity.Informational,
                 Data = { ["DeviceId"] = deviceId }
             };
 
@@ -256,7 +258,7 @@ public class HidSecurityWindowsService : BackgroundService
             // Broadcast to connected clients
             await _ipcService.BroadcastAsync(new Core.Interfaces.IpcMessage
             {
-                MessageType = Core.Interfaces.IpcMessageTypes.DeviceListResponse,
+                MessageType = Services.IPC.IpcMessageTypes.DeviceListResponse,
                 Payload = new Dictionary<string, object?>
                 {
                     ["Action"] = "DeviceDisconnected",

@@ -266,10 +266,10 @@ public static class DpapiHelper
         try
         {
             var plainBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
-            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
-                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
-                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
-            
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine
+                ? System.Security.Cryptography.DataProtectionScope.LocalMachine
+                : System.Security.Cryptography.DataProtectionScope.CurrentUser;
+
             var encryptedBytes = System.Security.Cryptography.ProtectedData.Protect(plainBytes, null, protectedScope);
             return Convert.ToBase64String(encryptedBytes);
         }
@@ -289,10 +289,10 @@ public static class DpapiHelper
         try
         {
             var encryptedBytes = Convert.FromBase64String(encryptedText);
-            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
-                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
-                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
-            
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine
+                ? System.Security.Cryptography.DataProtectionScope.LocalMachine
+                : System.Security.Cryptography.DataProtectionScope.CurrentUser;
+
             var plainBytes = System.Security.Cryptography.ProtectedData.Unprotect(encryptedBytes, null, protectedScope);
             return System.Text.Encoding.UTF8.GetString(plainBytes);
         }
@@ -309,10 +309,10 @@ public static class DpapiHelper
     {
         try
         {
-            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
-                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
-                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
-            
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine
+                ? System.Security.Cryptography.DataProtectionScope.LocalMachine
+                : System.Security.Cryptography.DataProtectionScope.CurrentUser;
+
             return System.Security.Cryptography.ProtectedData.Protect(plainData, optionalEntropy, protectedScope);
         }
         catch (Exception ex)
@@ -328,10 +328,10 @@ public static class DpapiHelper
     {
         try
         {
-            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
-                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
-                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
-            
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine
+                ? System.Security.Cryptography.DataProtectionScope.LocalMachine
+                : System.Security.Cryptography.DataProtectionScope.CurrentUser;
+
             return System.Security.Cryptography.ProtectedData.Unprotect(encryptedData, optionalEntropy, protectedScope);
         }
         catch (Exception ex)

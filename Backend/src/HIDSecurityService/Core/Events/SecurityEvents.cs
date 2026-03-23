@@ -379,24 +379,37 @@ public enum ThreatType
     /// Mass storage malware.
     /// </summary>
     StorageMalware = 3,
-    
+
     /// <summary>
     /// Device spoofing.
     /// </summary>
     DeviceSpoofing = 4,
-    
+
     /// <summary>
     /// Unauthorized device.
     /// </summary>
     UnauthorizedDevice = 5,
-    
+
     /// <summary>
     /// Suspicious behavior.
     /// </summary>
     SuspiciousBehavior = 6,
-    
+
     /// <summary>
     /// Firmware tampering.
     /// </summary>
     FirmwareTampering = 7
+}
+
+/// <summary>
+/// Event for service lifecycle events (start/stop).
+/// </summary>
+public sealed class ServiceLifecycleEvent : SecurityEvent
+{
+    public ServiceLifecycleEvent()
+    {
+        EventType = nameof(ServiceLifecycleEvent);
+        Category = EventCategory.ServiceLifecycle;
+        Severity = EventSeverity.Informational;
+    }
 }

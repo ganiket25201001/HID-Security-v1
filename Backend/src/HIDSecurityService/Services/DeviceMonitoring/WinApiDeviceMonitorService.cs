@@ -142,9 +142,9 @@ public sealed class WinApiDeviceMonitorService : IDeviceMonitorService
             }
 
             // Register for USB device interface notifications
-            var notificationFilter = new DevBroadcastDeviceInterface
+            var notificationFilter = new NativeMethods.DevBroadcastDeviceInterface
             {
-                Size = Marshal.SizeOf<DevBroadcastDeviceInterface>(),
+                Size = Marshal.SizeOf<NativeMethods.DevBroadcastDeviceInterface>(),
                 DeviceType = DbtDevtypDeviceinterface,
                 Reserved = 0,
                 ClassGuid = GuidDevinterfaceUsbDevice
@@ -353,7 +353,7 @@ public sealed class WinApiDeviceMonitorService : IDeviceMonitorService
 /// </summary>
 internal static class UsbDeviceEnumerator
 {
-    private static readonly Guid GuidUsbController = new("4d36e978-e325-11ce-bfc1-08002be10318");
+    private static Guid GuidUsbController = new("4d36e978-e325-11ce-bfc1-08002be10318");
 
     /// <summary>
     /// Enumerates all connected USB devices.
@@ -513,10 +513,10 @@ internal static class UsbDeviceEnumerator
 internal static class NativeMethods
 {
     public static readonly IntPtr InvalidHandle = new(-1);
-    
+
     public const uint DIGCF_PRESENT = 0x00000002;
     public const uint DIGCF_DEVICEINTERFACE = 0x00000010;
-    
+
     public const uint SPDRP_HARDWAREID = 0x00000001;
     public const uint SPDRP_FRIENDLYNAME = 0x0000000C;
     public const uint SPDRP_DEVICEDESC = 0x00000000;

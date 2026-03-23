@@ -58,7 +58,7 @@ public sealed class PolicyEvaluationService : IPolicyEvaluationService
             {
                 decision.IsAllowed = ruleResult.Value;
                 decision.Reason = rule.Name;
-                decision.Action = rule.Action;
+                decision.EnforcementAction = rule.Action;
                 decision.PolicyId = _activePolicy?.PolicyId;
                 decision.RuleIds.Add(rule.RuleId);
 

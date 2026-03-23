@@ -157,8 +157,8 @@ public sealed class SecurityEventLoggerService : ISecurityEventLogger
                 {
                     var doc = System.Text.Json.JsonDocument.Parse(line);
                     var eventType = doc.RootElement.GetProperty("EventType").GetString();
-                    
-                    var securityEvent = eventType switch
+
+                    Core.Events.SecurityEvent securityEvent = eventType switch
                     {
                         nameof(DeviceConnectedEvent) => new DeviceConnectedEvent(),
                         nameof(DeviceDisconnectedEvent) => new DeviceDisconnectedEvent(),
@@ -172,9 +172,9 @@ public sealed class SecurityEventLoggerService : ISecurityEventLogger
                     securityEvent.Timestamp = doc.RootElement.GetProperty("Timestamp").GetDateTime();
                     securityEvent.Title = doc.RootElement.GetProperty("Title").GetString() ?? "";
                     securityEvent.Description = doc.RootElement.GetProperty("Description").GetString() ?? "";
-                    securityEvent.Severity = Enum.Parse<EventSeverity>(
+                    securityEvent.Severity = Enum.Parse<Core.Events.EventSeverity>(
                         doc.RootElement.GetProperty("Severity").GetString() ?? "Informational");
-                    securityEvent.Category = Enum.Parse<EventCategory>(
+                    securityEvent.Category = Enum.Parse<Core.Events.EventCategory>(
                         doc.RootElement.GetProperty("Category").GetString() ?? "System");
 
                     events.Add(securityEvent);
@@ -303,8 +303,8 @@ public sealed class SecurityEventLoggerService : ISecurityEventLogger
             Path.GetDirectoryName(_logFilePath)!,
             $"security-events_{timestamp}.log");
 
-        await File.MoveAsync(_logFilePath, rotatedPath);
-        
+        File.Move(_logFilePath, rotatedPath);
+
         _logger.LogInformation("Rotated log file to {RotatedPath}", rotatedPath);
 
         // Cleanup old rotated logs
@@ -353,46 +353,5 @@ public sealed class SecurityEventLoggerService : ISecurityEventLogger
     public void Dispose()
     {
         _writeLock.Dispose();
-    }
-}
-
-/// <summary>
-/// Serilog configuration extension.
-/// </summary>
-public static class SecurityEventLoggerExtensions
-{
-    public static IHostBuilder UseSecurityLogging(this IHostBuilder hostBuilder)
-    {
-        return hostBuilder.UseSerilog((context, services, configuration) =>
-        {
-            var config = services.BuildServiceProvider().GetRequiredService<IOptions<ServiceConfiguration>>();
-            var loggingConfig = config.Value.Logging;
-
-            configuration
-                .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .MinimumLevel.Override("System", LogEventLevel.Warning)
-                .Enrich.FromLogContext()
-                .Enrich.WithMachineName()
-                .Enrich.WithThreadId();
-
-            if (loggingConfig.EnableFileLog)
-            {
-                var logPath = Path.Combine(AppContext.BaseDirectory, loggingConfig.LogPath, "service-.log");
-                configuration.WriteTo.File(
-                    logPath,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: loggingConfig.RetentionDays,
-                    fileSizeLimitBytes: loggingConfig.MaxFileSizeMb * 1024 * 1024,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-            }
-
-            if (loggingConfig.EnableEventLog)
-            {
-                configuration.WriteTo.EventLog(
-                    loggingConfig.EventLogSource,
-                    manageEventSource: true);
-            }
-        });
     }
 }

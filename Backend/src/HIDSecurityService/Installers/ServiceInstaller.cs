@@ -123,8 +123,8 @@ public static class ServiceInstaller
     {
         try
         {
-            using var scm = System.ServiceProcess.ServiceController.GetDevices();
-            foreach (var service in scm)
+            var services = System.ServiceProcess.ServiceController.GetDevices();
+            foreach (var service in services)
             {
                 if (service.ServiceName == ServiceName)
                 {

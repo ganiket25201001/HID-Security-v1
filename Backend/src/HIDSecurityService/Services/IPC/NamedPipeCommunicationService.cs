@@ -128,19 +128,13 @@ public sealed class NamedPipeCommunicationService : IIpcCommunicationService
         {
             try
             {
-                // Create pipe security with ACLs
-                var pipeSecurity = CreatePipeSecurity();
-
-                // Create server stream
+                // Create server stream with basic configuration
                 var serverStream = new NamedPipeServerStream(
                     _config.PipeName,
                     PipeDirection.InOut,
-                    _config.MaxConnections,
+                    Math.Min(_config.MaxConnections, 10),
                     PipeTransmissionMode.Message,
-                    PipeOptions.Asynchronous,
-                    0, // Default buffer size
-                    0,
-                    pipeSecurity);
+                    PipeOptions.Asynchronous);
 
                 // Wait for client connection
                 await serverStream.WaitForConnectionAsync(cancellationToken);
@@ -241,21 +235,24 @@ public sealed class NamedPipeCommunicationService : IIpcCommunicationService
         var json = System.Text.Json.JsonSerializer.Serialize(message);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
 
-        List<NamedPipeServerStream> disconnectedStreams = new();
-
+        List<NamedPipeServerStream> streamsToWrite;
         lock (_clientStreams)
         {
-            foreach (var stream in _clientStreams.Where(s => s.IsConnected))
+            streamsToWrite = _clientStreams.Where(s => s.IsConnected).ToList();
+        }
+
+        List<NamedPipeServerStream> disconnectedStreams = new();
+
+        foreach (var stream in streamsToWrite)
+        {
+            try
             {
-                try
-                {
-                    await stream.WriteAsync(bytes.AsMemory(0, bytes.Length));
-                    await stream.FlushAsync();
-                }
-                catch
-                {
-                    disconnectedStreams.Add(stream);
-                }
+                await stream.WriteAsync(bytes.AsMemory(0, bytes.Length));
+                await stream.FlushAsync();
+            }
+            catch
+            {
+                disconnectedStreams.Add(stream);
             }
         }
 

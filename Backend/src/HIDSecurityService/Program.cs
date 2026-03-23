@@ -36,14 +36,14 @@ try
         loggerConfig
             .ReadFrom.Configuration(builder.Configuration)
             .Enrich.FromLogContext()
-            .Enrich.WithMachineName()
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
             .WriteTo.File(
                 Path.Combine(AppContext.BaseDirectory, "logs", "service-.log"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 90);
-        
+
         if (OperatingSystem.IsWindows())
         {
             loggerConfig.WriteTo.EventLog("HIDSecurityService", manageEventSource: true);
