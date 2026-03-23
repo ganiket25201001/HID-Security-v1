@@ -1,0 +1,49 @@
+<!-- 
+  Authenticode Signing Targets for HID Security Service
+  Configure these properties before building for production:
+  - SignToolPath: Path to signtool.exe (usually in Windows SDK)
+  - CertificatePath: Path to your code signing certificate (.pfx)
+  - CertificatePassword: Certificate password (use secure storage in CI/CD)
+  - TimestampServer: RFC 3161 timestamp server URL
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Signing Configuration -->
+    <SignToolPath Condition="'$(SignToolPath)' == ''">C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe</SignToolPath>
+    <CertificatePath Condition="'$(CertificatePath)' == ''">$(MSBuildThisFileDirectory)certificate.pfx</CertificatePath>
+    <CertificatePassword Condition="'$(CertificatePassword)' == ''"></CertificatePassword>
+    <TimestampServer Condition="'$(TimestampServer)' == ''">http://timestamp.digicert.com</TimestampServer>
+    <SignAssembly>false</SignAssembly>
+    <EnableCodeSigning Condition="'$(Configuration)' == 'Release'">true</EnableCodeSigning>
+    <EnableCodeSigning Condition="'$(Configuration)' == 'Debug'">false</EnableCodeSigning>
+  </PropertyGroup>
+
+  <Target Name="SignAssembly" AfterTargets="Build" Condition="'$(EnableCodeSigning)' == 'true' AND Exists('$(CertificatePath)')">
+    <PropertyGroup>
+      <SignCommand>"$(SignToolPath)" sign /f "$(CertificatePath)"</SignCommand>
+      <SignCommand Condition="'$(CertificatePassword)' != ''">$(SignCommand) /p "$(CertificatePassword)"</SignCommand>
+      <SignCommand>$(SignCommand) /tr "$(TimestampServer)" /td sha256 /fd sha256</SignCommand>
+      <SignCommand>$(SignCommand) /d "HID Security Service" /du "https://github.com/ganiket25201001/HID-Security-v1"</SignCommand>
+      <SignCommand>$(SignCommand) "$(TargetPath)"</SignCommand>
+    </PropertyGroup>
+    
+    <Message Importance="high" Text="Signing assembly: $(TargetPath)" />
+    <Exec Command="$(SignCommand)" />
+  </Target>
+
+  <Target Name="SignAllFiles" AfterTargets="Publish" Condition="'$(EnableCodeSigning)' == 'true' AND Exists('$(CertificatePath)')">
+    <ItemGroup>
+      <FilesToSign Include="$(PublishDir)**\*.exe" />
+      <FilesToSign Include="$(PublishDir)**\*.dll" />
+    </ItemGroup>
+    
+    <PropertyGroup>
+      <SignCommand>"$(SignToolPath)" sign /f "$(CertificatePath)"</SignCommand>
+      <SignCommand Condition="'$(CertificatePassword)' != ''">$(SignCommand) /p "$(CertificatePassword)"</SignCommand>
+      <SignCommand>$(SignCommand) /tr "$(TimestampServer)" /td sha256 /fd sha256</SignCommand>
+    </PropertyGroup>
+    
+    <Message Importance="high" Text="Signing published files in $(PublishDir)" />
+    <Exec Command="$(SignCommand) %(FilesToSign.FullPath)" />
+  </Target>
+</Project>

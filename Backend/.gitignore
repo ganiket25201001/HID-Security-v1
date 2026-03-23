@@ -1,0 +1,65 @@
+# Build outputs
+bin/
+obj/
+publish/
+release/
+
+# Logs
+logs/
+*.log
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# MonoDevelop files
+*.pidb
+*.userprefs
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Test results
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Build result
+*.dll
+*.exe
+*.pdb
+*.xml
+
+# Configuration (keep templates, ignore actual configs with secrets)
+# appsettings.Production.json
+
+# Certificates
+*.pfx
+*.p12
+*.cer
+*.key
+
+# Security
+security/
+!security/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*~
