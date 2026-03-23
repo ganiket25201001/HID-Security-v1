@@ -24,7 +24,7 @@ public class HidSecurityWindowsService : BackgroundService
     private readonly IPolicyEvaluationService _policyService;
     private readonly IThreatScoringService _threatScoring;
     private readonly IIpcCommunicationService _ipcService;
-    private readonly IConfigurationManager _configManager;
+    private readonly Configuration.ConfigurationManager _configManager;
     private readonly ServiceConfiguration _config;
 
     public HidSecurityWindowsService(
@@ -36,7 +36,7 @@ public class HidSecurityWindowsService : BackgroundService
         IPolicyEvaluationService policyService,
         IThreatScoringService threatScoring,
         IIpcCommunicationService ipcService,
-        IConfigurationManager configManager,
+        Configuration.ConfigurationManager configManager,
         IOptions<ServiceConfiguration> config)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -1,15 +1,7 @@
-using HIDSecurityService;
-using HIDSecurityService.Configuration;
-using HIDSecurityService.Core.Interfaces;
-using HIDSecurityService.Services.AI;
-using HIDSecurityService.Services.DeviceMonitoring;
-using HIDSecurityService.Services.DeviceTracking;
-using HIDSecurityService.Services.IPC;
-using HIDSecurityService.Services.Logging;
-using HIDSecurityService.Services.Policy;
 using Serilog;
+using HIDSecurityService;
 
-// Configure Serilog early for bootstrap logging
+// Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
@@ -26,83 +18,39 @@ try
 
     var builder = Host.CreateApplicationBuilder(args);
 
-    // Configure hosting for Windows Service
+    // Configure Windows Service
     builder.Services.AddWindowsService(options =>
     {
         options.ServiceName = "HIDSecurityService";
     });
 
     // Load configuration
-    builder.Configuration.AddJsonFile(
-        "appsettings.json",
-        optional: false,
-        reloadOnChange: true);
+    builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-    builder.Configuration.AddJsonFile(
-        $"appsettings.{builder.Environment.EnvironmentName}.json",
-        optional: true,
-        reloadOnChange: true);
+    // Register services
+    builder.Services.AddHostedService<HidSecurityWindowsService>();
 
-    // Bind configuration
-    builder.Services.Configure<ServiceConfiguration>(
-        builder.Configuration.GetSection("ServiceConfiguration"));
-
-    // Add Serilog
+    // Use Serilog
     builder.Services.AddSerilog((services, loggerConfig) =>
     {
-        var config = services.BuildServiceProvider()
-            .GetRequiredService<IOptions<ServiceConfiguration>>();
-        
         loggerConfig
             .ReadFrom.Configuration(builder.Configuration)
-            .ReadFrom.Services(services)
             .Enrich.FromLogContext()
             .Enrich.WithMachineName()
-            .Enrich.WithThreadId()
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning);
-
-        // File sink
-        var logPath = Path.Combine(AppContext.BaseDirectory, config.Value.Logging.LogPath);
-        Directory.CreateDirectory(logPath);
+            .WriteTo.File(
+                Path.Combine(AppContext.BaseDirectory, "logs", "service-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 90);
         
-        loggerConfig.WriteTo.File(
-            Path.Combine(logPath, "service-.log"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: config.Value.Logging.RetentionDays,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-
-        // Event Log sink (Windows only)
-        if (OperatingSystem.IsWindows() && config.Value.Logging.EnableEventLog)
+        if (OperatingSystem.IsWindows())
         {
-            loggerConfig.WriteTo.EventLog(
-                config.Value.Logging.EventLogSource,
-                manageEventSource: true);
+            loggerConfig.WriteTo.EventLog("HIDSecurityService", manageEventSource: true);
         }
     });
 
-    // Register services
-    builder.Services.AddSingleton<IConfigurationManager, ConfigurationManager>();
-    builder.Services.AddSingleton<IDeviceMonitorService, WinApiDeviceMonitorService>();
-    builder.Services.AddSingleton<IDeviceTrackerService, DeviceTrackerService>();
-    builder.Services.AddSingleton<ISecurityEventLogger, SecurityEventLoggerService>();
-    builder.Services.AddSingleton<IPolicyEvaluationService, PolicyEvaluationService>();
-    builder.Services.AddSingleton<IThreatScoringService, ThreatScoringService>();
-    builder.Services.AddSingleton<IIpcCommunicationService, NamedPipeCommunicationService>();
-
-    // Register the Windows Service
-    builder.Services.AddSingleton<HidSecurityWindowsService>();
-    builder.Services.AddHostedService(provider =>
-        provider.GetRequiredService<HidSecurityWindowsService>());
-
     var app = builder.Build();
-
-    // Use Serilog
-    app.Services.UseSerilog();
-
-    Log.Information("Starting HID Security Service");
-
     await app.RunAsync();
 }
 catch (Exception ex)

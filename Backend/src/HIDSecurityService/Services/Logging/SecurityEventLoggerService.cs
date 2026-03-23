@@ -396,22 +396,3 @@ public static class SecurityEventLoggerExtensions
         });
     }
 }
-
-/// <summary>
-/// Serilog enricher for machine name.
-/// </summary>
-public class MachineNameEnricher : Serilog.Core.IEnricher
-{
-    public void Enrich(LogEvent logEvent, Serilog.Core.ILogEventPropertyFactory propertyFactory)
-    {
-        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("MachineName", Environment.MachineName));
-    }
-}
-
-public static class LoggerEnrichmentConfigurationExtensions
-{
-    public static LoggerConfiguration WithMachineName(this LoggerEnrichmentConfiguration enrichmentConfiguration)
-    {
-        return enrichmentConfiguration.With<MachineNameEnricher>();
-    }
-}

@@ -1,15 +1,16 @@
 using System.Security.Cryptography;
 using System.Security.Principal;
-using HIDSecurityService.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ServiceConfiguration = HIDSecurityService.Core.Interfaces.ServiceConfiguration;
+using ConfigurationValidationResult = HIDSecurityService.Core.Interfaces.ConfigurationValidationResult;
 
 namespace HIDSecurityService.Configuration;
 
 /// <summary>
 /// Configuration manager with DPAPI encryption support.
 /// </summary>
-public sealed class ConfigurationManager : IConfigurationManager
+public sealed class ConfigurationManager : Core.Interfaces.IConfigurationManager
 {
     private readonly ILogger<ConfigurationManager> _logger;
     private readonly ServiceConfiguration _config;
@@ -258,18 +259,18 @@ public static class DpapiHelper
     /// <summary>
     /// Encrypts data using DPAPI.
     /// </summary>
-    public static string Encrypt(string plainText, DataProtectionScope scope = DataProtectionScope.LocalMachine)
+    public static string Encrypt(string plainText, Core.Interfaces.DataProtectionScope scope = Core.Interfaces.DataProtectionScope.LocalMachine)
     {
         if (string.IsNullOrEmpty(plainText)) return plainText;
 
         try
         {
             var plainBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
-            var scopeValue = scope == DataProtectionScope.LocalMachine 
-                ? CryptProtectScope.CRYPTPROTECT_LOCAL_MACHINE 
-                : CryptProtectScope.CRYPTPROTECT_CURRENT_USER;
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
+                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
+                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
             
-            var encryptedBytes = ProtectedData.Protect(plainBytes, null, (System.Security.Cryptography.ProtectedData.DataProtectionScope)scope);
+            var encryptedBytes = System.Security.Cryptography.ProtectedData.Protect(plainBytes, null, protectedScope);
             return Convert.ToBase64String(encryptedBytes);
         }
         catch (Exception ex)
@@ -281,14 +282,18 @@ public static class DpapiHelper
     /// <summary>
     /// Decrypts data using DPAPI.
     /// </summary>
-    public static string Decrypt(string encryptedText, DataProtectionScope scope = DataProtectionScope.LocalMachine)
+    public static string Decrypt(string encryptedText, Core.Interfaces.DataProtectionScope scope = Core.Interfaces.DataProtectionScope.LocalMachine)
     {
         if (string.IsNullOrEmpty(encryptedText)) return encryptedText;
 
         try
         {
             var encryptedBytes = Convert.FromBase64String(encryptedText);
-            var plainBytes = ProtectedData.Unprotect(encryptedBytes, null, (System.Security.Cryptography.ProtectedData.DataProtectionScope)scope);
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
+                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
+                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
+            
+            var plainBytes = System.Security.Cryptography.ProtectedData.Unprotect(encryptedBytes, null, protectedScope);
             return System.Text.Encoding.UTF8.GetString(plainBytes);
         }
         catch (Exception ex)
@@ -300,11 +305,15 @@ public static class DpapiHelper
     /// <summary>
     /// Encrypts a byte array.
     /// </summary>
-    public static byte[] Encrypt(byte[] plainData, byte[]? optionalEntropy = null, DataProtectionScope scope = DataProtectionScope.LocalMachine)
+    public static byte[] Encrypt(byte[] plainData, byte[]? optionalEntropy = null, Core.Interfaces.DataProtectionScope scope = Core.Interfaces.DataProtectionScope.LocalMachine)
     {
         try
         {
-            return ProtectedData.Protect(plainData, optionalEntropy, (System.Security.Cryptography.ProtectedData.DataProtectionScope)scope);
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
+                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
+                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
+            
+            return System.Security.Cryptography.ProtectedData.Protect(plainData, optionalEntropy, protectedScope);
         }
         catch (Exception ex)
         {
@@ -315,21 +324,19 @@ public static class DpapiHelper
     /// <summary>
     /// Decrypts a byte array.
     /// </summary>
-    public static byte[] Decrypt(byte[] encryptedData, byte[]? optionalEntropy = null, DataProtectionScope scope = DataProtectionScope.LocalMachine)
+    public static byte[] Decrypt(byte[] encryptedData, byte[]? optionalEntropy = null, Core.Interfaces.DataProtectionScope scope = Core.Interfaces.DataProtectionScope.LocalMachine)
     {
         try
         {
-            return ProtectedData.Unprotect(encryptedData, optionalEntropy, (System.Security.Cryptography.ProtectedData.DataProtectionScope)scope);
+            var protectedScope = scope == Core.Interfaces.DataProtectionScope.LocalMachine 
+                ? System.Security.Cryptography.ProtectedData.DataProtectionScope.LocalMachine 
+                : System.Security.Cryptography.ProtectedData.DataProtectionScope.CurrentUser;
+            
+            return System.Security.Cryptography.ProtectedData.Unprotect(encryptedData, optionalEntropy, protectedScope);
         }
         catch (Exception ex)
         {
             throw new CryptographicException("Failed to decrypt data", ex);
         }
     }
-}
-
-internal enum CryptProtectScope
-{
-    CRYPTPROTECT_CURRENT_USER = 0x0,
-    CRYPTPROTECT_LOCAL_MACHINE = 0x4
 }

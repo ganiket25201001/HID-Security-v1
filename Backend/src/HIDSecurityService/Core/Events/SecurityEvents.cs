@@ -194,7 +194,7 @@ public sealed class DeviceDisconnectedEvent : SecurityEvent
     /// <summary>
     /// Disconnected device ID.
     /// </summary>
-    public string DeviceId { get; set; } = string.Empty;
+    public new string DeviceId { get; set; } = string.Empty;
     
     /// <summary>
     /// Device fingerprint.

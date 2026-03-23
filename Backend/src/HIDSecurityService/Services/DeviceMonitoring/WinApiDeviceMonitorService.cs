@@ -517,13 +517,7 @@ internal static class NativeMethods
     public const uint DIGCF_PRESENT = 0x00000002;
     public const uint DIGCF_DEVICEINTERFACE = 0x00000010;
     
-    public const uint SpdrpHardwareid = 0x00000001;
-    public const uint SpdrpFriendlyname = 0x0000000C;
-    public const uint SpdrpDeviceDesc = 0x00000000;
-    public const uint SpdrpMfg = 0x0000000B;
-    public const uint SpdrpSerialnumber = 0x00000005;
-
-    public const uint SpdrpHardwareid = 0x00000001;
+    public const uint SPDRP_HARDWAREID = 0x00000001;
     public const uint SPDRP_FRIENDLYNAME = 0x0000000C;
     public const uint SPDRP_DEVICEDESC = 0x00000000;
     public const uint SPDRP_MFG = 0x0000000B;
