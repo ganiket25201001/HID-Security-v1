@@ -417,6 +417,11 @@ internal static class UsbDeviceEnumerator
         // Get device ID
         var deviceId = GetDeviceProperty(deviceInfoSet, deviceInfoData, NativeMethods.SPDRP_HARDWAREID);
         
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            return null;
+        }
+        
         // Get friendly name
         var deviceName = GetDeviceProperty(deviceInfoSet, deviceInfoData, NativeMethods.SPDRP_FRIENDLYNAME) 
                         ?? GetDeviceProperty(deviceInfoSet, deviceInfoData, NativeMethods.SPDRP_DEVICEDESC) 
